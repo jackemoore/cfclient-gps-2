@@ -2,7 +2,7 @@
 
 from PyQt4 import QtCore, QtGui, QtWebKit, QtNetwork
 
-import functools
+import functools, time
 
 class MapviewWidget(QtGui.QWidget):
 
@@ -14,9 +14,15 @@ class MapviewWidget(QtGui.QWidget):
 #        self.lat = 51.504
 #        self.lng = -0.09
 #        self.goOut(self.lat, self.lng)
-        self.lat = 33.7674
-        self.lng = -117.5008
-        self.goOut(self.lat, self.lng) 
+        self.lath = 33.7674
+        self.lngh = -117.5008
+        self.lockedh = 1.0
+        self.goOut(self.lath, self.lngh, self.lockedh)
+        time.sleep(1)
+        self.latq = 33.7660
+        self.lngq = -117.5008
+        self.lockedq = 2.0
+        self.goOut(self.latq, self.lngq, self.lockedq)  
         
     def setupUi(self):
         vbox = QtGui.QVBoxLayout()
@@ -46,7 +52,8 @@ class MapviewWidget(QtGui.QWidget):
 #        self.lat = 51.505
 #        self.lng = -0.09
         self.lat = 33.7674
-        self.lng = -117.5008              
+        self.lng = -117.5008
+        self.locked = 1.0
 
  
         button = QtGui.QPushButton('Go to Home')
@@ -60,7 +67,7 @@ class MapviewWidget(QtGui.QWidget):
             frame.evaluateJavaScript(f.read())
 
     def addPoints(self):
-        self.onGpsUpdate(self.lat,self.lng)
+        self.onGpsUpdate(self.lat,self.lng, self.locked)
 
     @QtCore.pyqtSlot(float, float)
 
@@ -71,12 +78,12 @@ class MapviewWidget(QtGui.QWidget):
         frame = self.view.page().mainFrame()
         frame.evaluateJavaScript('map.panTo(L.latLng({}, {}));'.format(lat, lng))
     
-    def onGpsUpdate(self, lat, lng):
+    def onGpsUpdate(self, lat, lng, locked):
         frame = self.view.page().mainFrame()
-        frame.evaluateJavaScript('gpsPoint({}, {});'.format(lat, lng))
+        frame.evaluateJavaScript('gpsPoint({}, {}, {});'.format(lat, lng, locked))
 
-    def goOut(self,lat,lng):
-        self.onGpsUpdate(lat, lng) 
+    def goOut(self,lat,lng,locked):
+        self.onGpsUpdate(lat, lng, locked) 
         
 
 if __name__ == '__main__':

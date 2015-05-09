@@ -61,6 +61,7 @@ from PyQt4.QtGui import *
 
 
 should_enable_tab = True
+gps_connected = False
 
 import sys
 
@@ -201,10 +202,21 @@ class GpsTab(Tab, gps_tab_class):
         self._speed_max.setText(str(self._max_speed))
 
         self._fix_type.setText(self._fix_types[fix_type])
-
-        self._mapview.add_data(long, lati, alt, accuracy,
-#                              True if fix_type == 3 else False)
-                              True if fix_type >= 2 else False)  
+        
+        if self._got_home_point:
+            if fix_type >=2:
+                locked = 2.0
+            else:
+                locked = 0.0
+        else:
+            if fix_type >=3:
+                self._got_home_point = True
+                locked = 1.0
+            else:
+                locked = 0.0
+                
+        if locked > 0.0:  
+            self._mapview.add_data(long, lati, alt, accuracy, locked)
 
 if should_enable_tab:
     class MapviewWidget(QtGui.QWidget):
@@ -220,7 +232,8 @@ if should_enable_tab:
             self._lat = None
             self._lng = None
             self._height = None
-            self._accu =  None 
+            self._accu =  None
+            self._locked =  0.0
 
             vbox = QtGui.QVBoxLayout()
             self.setLayout(vbox)
@@ -246,8 +259,9 @@ if should_enable_tab:
             view.linkClicked.connect(QtGui.QDesktopServices.openUrl)
             vbox.addWidget(view)
 
-            self.lat = 33.7674
-            self.lng = -117.5008              
+            self.lat = 33.7650
+            self.lng = -117.5008
+            self.locked = 0.0
 
             button = QtGui.QPushButton('Go to Home')
             panToHome = functools.partial(self.panMap, self.lng, self.lat)
@@ -260,7 +274,7 @@ if should_enable_tab:
                 frame.evaluateJavaScript(f.read())
 
         def addPoints(self):
-            self.onGpsUpdate(self.lat,self.lng)
+            self.onGpsUpdate(self.lat,self.lng,self.locked)
 
         @QtCore.pyqtSlot(float, float)
 
@@ -271,12 +285,12 @@ if should_enable_tab:
             frame = self.view.page().mainFrame()
             frame.evaluateJavaScript('map.panTo(L.latLng({}, {}));'.format(lat, lng))
  
-        def onGpsUpdate(self, lat, lng):
+        def onGpsUpdate(self, lat, lng, locked):
             frame = self.view.page().mainFrame()
-            frame.evaluateJavaScript('gpsPoint({}, {});'.format(lat, lng))
+            frame.evaluateJavaScript('gpsPoint({}, {}, {});'.format(lat, lng, locked))
 
-        def goOut(self,lat,lng):
-            self.onGpsUpdate(lat, lng) 
+        def goOut(self,lat,lng,locked):
+            self.onGpsUpdate(lat, lng, locked) 
 
         def clear_data(self):
 #            self._points = []
@@ -284,6 +298,7 @@ if should_enable_tab:
             self._lng = None
             self._height = None
             self._accu =  None
+            self._locked =  0.0
 
         def add_data(self, lng, lat, height, accu, locked):
 #            self._points.append([lng, lat, height, accu, locked])
@@ -291,8 +306,8 @@ if should_enable_tab:
             self._lng = lng
             self._height = height
             self._accu =  accu
+            self._locked =  locked
 #            self.update()
-            if locked: 
-                self.goOut(self._lat, self._lng)            
+            self.goOut(self._lat, self._lng, self._locked)            
             
                  

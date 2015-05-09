@@ -28,22 +28,43 @@ var geojsonFeature = {
     }
 };
 
-var myLayer = L.geoJson(geojsonFeature, {
+var myLayerP = L.geoJson(geojsonFeature, {
     pointToLayer: function (feature, latlng) {
         return L.circleMarker(latlng, geojsonMarkerOptions);
     } 
 });
 
-function gpsPoint(lat,lng) {
-    map.removeLayer(myLayer);  
-//    map.panTo([lat, lng]);
+var myLayerH = L.geoJson(geojsonFeature, {
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, geojsonMarkerOptions);
+    } 
+});
+
+
+function gpsPoint(lat,lng,locked) {
     geojsonFeature.geometry.coordinates = [lng, lat];
-    myLayer = L.geoJson(geojsonFeature, {
-        pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, geojsonMarkerOptions);
-        } 
-    });    
-    map.addLayer(myLayer); 
+    if (locked == 1.0) {
+        map.removeLayer(myLayerH);
+        map.removeLayer(myLayerP);
+        map.panTo([lat, lng]);
+        geojsonMarkerOptions.fillColor = "#0079c1";
+        myLayerH = L.geoJson(geojsonFeature, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            } 
+        });    
+        map.addLayer(myLayerH);
+        geojsonMarkerOptions.fillColor = "#ff7800";
+    }
+    else if (locked > 0.0) {
+        map.removeLayer(myLayerP); 
+        myLayerP = L.geoJson(geojsonFeature, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            } 
+        });    
+        map.addLayer(myLayerP);
+    }
 };
 
 if(typeof MapviewWidget != 'undefined') {
